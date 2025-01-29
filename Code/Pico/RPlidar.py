@@ -1,89 +1,53 @@
-import sys
-from math import pi
 from machine import Pin, PWM
-from time import sleep
+import time
+from machine import UART
 
 class Motor:
-
-    def __init__(self, dir_pin, pwm_pin, enca_pin, encb_pin, slp_pin):
+    def __init__(self, dir_pin, pwm_pin, slp_pin):
         self._dir_pin = Pin(dir_pin, Pin.OUT)
         self._pwm_pin = PWM(Pin(pwm_pin))
-        self._enca_pin = Pin(enca_pin, Pin.IN, Pin.PULL_UP)
-        self._encb_pin = Pin(encb_pin, Pin.IN, Pin.PULL_UP)
-        self._slp_pin = Pin(slp_pin, Pin.OUT)  
+        self._slp_pin = Pin(slp_pin, Pin.OUT)  # Sleep pin
         self._pwm_pin.freq(1000)
-        self.disable()
-        self._enca_pin.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=self._inc_counts)
-        self._encb_pin.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=self._inc_counts)
-        self.encoder_counts = 0
-        self.stop()
-
-    def _inc_counts(self, pin):
-        self.encoder_counts += 1
-
-    def stop(self):
-        self._pwm_pin.duty_u16(0)
-
-    def enable(self):
-        self._slp_pin.value(1)
-
-    def disable(self):
-        self._pwm_pin.duty_ns(0)
-        self._slp_pin.value(0)
+        self._pwm_pin.duty_u16(0)  # Initially stop motor
+        self._slp_pin.value(1)  # Ensure the motor is awake
 
     def forward(self, duty=1.0):
-        self._dir_pin.value(0)
-        self._pwm_pin.duty_u16(int(duty*65536))
+        self._dir_pin.value(0)  # Forward direction
+        self._pwm_pin.duty_u16(int(duty * 65536))
 
     def backward(self, duty=1.0):
-        self._dir_pin.value(1)
-        self._pwm_pin.duty_u16(int(duty*65536))
+        self._dir_pin.value(1)  # Backward direction
+        self._pwm_pin.duty_u16(int(duty * 65536))
 
-    def reset_encoder(self):
-        self.encoder_counts = 0
+    def stop(self):
+        self._pwm_pin.duty_u16(0)  # Stop motor
 
-# Initialize UART to communicate with Raspberry Pi
-from machine import UART
-uart = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))  # Adjust TX/RX pins as needed
+# Initialize motor instances
+lm = Motor(3, 2, 4)  # Left motor pins
+rm = Motor(7, 6, 8)  # Right motor pins
 
-if __name__ == "__main__":
-    from machine import freq
-    freq(200_000_000)
-    
-    # Constants for robot setup
-    WHEEL_RADIUS = 0.0495  # meters
-    WHEEL_SEPARATION = 0.295  # meters
-    CPR = 64  # Counts per revolution
-    GEAR_RATIO = 70
+# Setup serial communication with the Raspberry Pi
+uart = UART(0, baudrate=115200, tx=Pin(0), rx=Pin(1))
 
-    # Initialize motors
-    lm = Motor(3, 2, 14, 15, 4)
-    rm = Motor(7, 6, 12, 13, 8)
-    lm.enable()
-    rm.enable()
+# Main loop to receive commands from Raspberry Pi
+while True:
+    if uart.any():
+        command = uart.read().decode('utf-8').strip()  # Read the command from the Raspberry Pi
+        print(f"Received command: {command}")
 
-    # Main loop to receive LiDAR commands and control motors
-    while True:
-        if uart.any():
-            # Read the incoming command from Raspberry Pi
-            command = uart.read().decode('utf-8').strip()
-            print(f"Received command: {command}")
-            
-            # Control motors based on the received command
-            if command == "STOP":
-                lm.stop()
-                rm.stop()
-            elif command == "FORWARD":
-                lm.forward(duty=0.5)  # Move forward at 50% speed
-                rm.forward(duty=0.5)  # Move forward at 50% speed
-            elif command == "BACKWARD":
-                lm.backward(duty=0.5)  # Move backward at 50% speed
-                rm.backward(duty=0.5)  # Move backward at 50% speed
-            elif command == "TURN_LEFT":
-                lm.backward(duty=0.5)  # Left motor moves backward
-                rm.forward(duty=0.5)  # Right motor moves forward
-            elif command == "TURN_RIGHT":
-                lm.forward(duty=0.5)  # Left motor moves forward
-                rm.backward(duty=0.5)  # Right motor moves backward
-            sleep(0.1)
+        # Execute commands based on the received data
+        if command == "move_forward":
+            lm.forward(duty=0.8)
+            rm.forward(duty=0.8)
+        elif command == "rotate_left":
+            lm.backward(duty=0.5)
+            rm.forward(duty=0.5)
+        elif command == "rotate_right":
+            lm.forward(duty=0.5)
+            rm.backward(duty=0.5)
+        elif command == "stop":
+            lm.stop()
+            rm.stop()
+
+        time.sleep(0.1)  # Small delay to prevent overloading the UART
 

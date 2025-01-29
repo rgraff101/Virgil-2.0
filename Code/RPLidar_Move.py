@@ -1,34 +1,54 @@
 import serial
 from math import floor
 from adafruit_rplidar import RPLidar
+import time
 
-# Setup the RPLidar and serial connection to Pico
+# Setup the RPLidar
 PORT_NAME = '/dev/ttyUSB0'
 lidar = RPLidar(None, PORT_NAME, timeout=3)
 
-# Serial port for communication with the Pico
-pico_serial = serial.Serial('/dev/ttyAMA0', 9600)  # Adjust port as needed
+# Setup serial communication with the Pico
+ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)  # Adjust port name as needed
 
-scan_data = [0] * 360
+def process_lidar_data(scan_data):
+    """
+    Process the lidar data and send appropriate commands to the Pico.
+    """
+    distance_at_180 = None
+    angle_of_bucket = None
+    min_distance = float('inf')
 
-try:
-    for scan in lidar.iter_scans():
-        for (_, angle, distance) in scan:
-            # Update scan_data with the distance for the corresponding angle
-            scan_data[min([359, floor(angle)])] = distance
-        
-        # Example logic: If something is too close at 180° (i.e., 1 meter or less), stop
-        if scan_data[180] < 1000:  # Distance is in mm, so 1000mm = 1m
-            pico_serial.write(b"STOP")  # Send "STOP" command to Pico
-        elif scan_data[180] > 1000 and scan_data[180] < 2000:  # Distance between 1m and 2m
-            pico_serial.write(b"FORWARD")  # Send "FORWARD" command to Pico
+    # Loop over the scan data and process the angle and distance
+    for (_, angle, distance) in scan_data:
+        if 150 <= angle <= 210:  # Bucket is in this range
+            if distance < min_distance:
+                min_distance = distance / 1000
+                angle_of_bucket = angle
+
+    if angle_of_bucket is not None:
+        print(f"Bucket detected at {angle_of_bucket}° with distance {min_distance} meters.")
+
+        if min_distance > 0.5:
+            print("Move forward toward the bucket.")
+            ser.write(b"move_forward\n")  # Send move forward command to Pico
         else:
-            pico_serial.write(b"TURN")  # Send "TURN" command to Pico
-        
-        print(f"Distance at 180°: {scan_data[180]} mm")
+            print("Stop moving; bucket is too close.")
+            ser.write(b"stop\n")  # Send stop command to Pico
+    else:
+        print("No bucket detected in the range of 150° to 210°.")
+        ser.write(b"stop\n")  # Stop if no bucket is detected
 
-except KeyboardInterrupt:
-    print('Stopping.')
-lidar.stop()
-lidar.disconnect()
+def main():
+    try:
+        for scan in lidar.iter_scans():
+            # Process the scan data
+            process_lidar_data(scan)
+            time.sleep(0.5)  # Pause to control the frequency of sending commands
+    except KeyboardInterrupt:
+        print('Stopping.')
+    finally:
+        lidar.stop()
+        lidar.disconnect()
 
+if __name__ == "__main__":
+    main()
