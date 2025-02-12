@@ -4,53 +4,50 @@ import sys
 import select
 
 class Motor:
-    def __init__(self, dir_pin, pwm_pin, slp_pin, enc_a, enc_b):
+    def __init__(self, dir_pin, pwm_pin, enc_a, enc_b, slp_pin):
         self._dir_pin = Pin(dir_pin, Pin.OUT)
         self._pwm_pin = PWM(Pin(pwm_pin))
         self._slp_pin = Pin(slp_pin, Pin.OUT)
         self._enc_a = Pin(enc_a, Pin.IN)
         self._enc_b = Pin(enc_b, Pin.IN)
         self._pwm_pin.freq(1000)
-        self._pwm_pin.duty_u16(0)  # Initially stop motor
-        self._slp_pin.value(1)  # Wake up the motor driver
+        self._pwm_pin.duty_u16(0)  
+        self._slp_pin.value(1) 
         self.encoder_count = 0
 
-        # Interrupt handlers for encoder pulses
         self._enc_a.irq(trigger=Pin.IRQ_RISING, handler=self._encoder_callback)
         self._enc_b.irq(trigger=Pin.IRQ_RISING, handler=self._encoder_callback)
 
     def _encoder_callback(self, pin):
-        """Increment encoder count on pulse detection."""
         self.encoder_count += 1
 
     def reset_encoder(self):
-        """Reset encoder count to zero."""
         self.encoder_count = 0
 
     def get_encoder_count(self):
-        """Return the encoder count."""
         return self.encoder_count
 
     def forward(self, duty=1.0):
-        self._dir_pin.value(0)  # Forward direction
-        self._pwm_pin.duty_u16(int(duty * 65535))
+        self._dir_pin.value(0) 
+        pwm_value = int(duty * 65535)
+        self._pwm_pin.duty_u16(pwm_value)
 
     def stop(self):
-        self._pwm_pin.duty_u16(0)  # Stop motor
+        self._pwm_pin.duty_u16(0)  
 
-# Initialize motors with encoder support
-lm = Motor(3, 2, 14, 15, 4)  # Left motor
-rm = Motor(7, 6, 12, 13, 8)  # Right motor
+lm = Motor(3, 2, 14, 15, 4)  
+rm = Motor(7, 6, 12, 13, 8) 
 
-# Create a poll object for non-blocking polling
+lm._slp_pin.value(1)
+rm._slp_pin.value(1)
+
 poller = select.poll()
 
-# Register sys.stdin for polling (Poll for input)
 poller.register(sys.stdin, select.POLLIN)
 
 if __name__ == '__main__':
+    print("Motor control system initialized. Awaiting commands...")
     while True:
-        # Poll for available data
         events = poller.poll()  # Check if there's any data
         for event in events:
             if event[0] == sys.stdin:

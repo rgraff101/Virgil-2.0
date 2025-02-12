@@ -46,7 +46,8 @@ try:
         time.sleep(0.1)
 
 except Exception as e:
-    print(f"Error: {e}")
+    command = "stop\n"
+    print(f"Stopping Motors Error: {e}")
 
 finally:
     lidar.stop()  # Stop the Lidar after the scan
