@@ -1,0 +1,10 @@
+## Reagan Graff
+### This week:
+- Reviewed and studied tutorials on training the AI camera for object detection.
+- Continued refining the program that dynamically adjusts the robot’s operational mode based on different segments of the course.
+- Successfully implemented a motor function that enables the robot to travel a specified distance based on input parameters.
+- Developed and nearly completed a LiDAR program that allows the robot to move toward an object and halt upon reaching a predetermined distance.
+
+### Goals:
+- Begin the process of training the AI camera for object detection to enhance autonomous navigation capabilities.
+- Organize the overall program architecture to establish a centralized main function that efficiently manages and calls sub-functions for each segment of the course.
