@@ -68,11 +68,30 @@ def handle_command(command):
         print("Turning right...")
     elif command == "turn_right_45":
         lm.forward(duty=0.3)  
-        rm.forward(duty=0.3) 
+        rm.forward(duty=0.1) 
         time.sleep(1)  
         lm.stop()
         rm.stop()
         print("Turning 45 degrees right...")
+    elif command == "turn_left_45":
+        lm.forward(duty=0.1)  
+        rm.forward(duty=0.3) 
+        time.sleep(1)  
+        lm.stop()
+        rm.stop()
+        print("Turning 45 degrees left...")
+    elif command == "ramp":
+        lm.forward(duty=0.8)
+        rm.forward(duty=0.8)
+        time.sleep(2)
+        lm.stop()
+        rm.stop()
+        print("Speeding up for ramp...")
+    elif command == "tunnel":
+        lm.forward(duty=0.6)
+        rm.forward(duty=0.6)
+    
+
     else:
         print(f"Unrecognized command: {command}")
 
