@@ -32,6 +32,24 @@ def get_front_distance():
             return (sum(distances) / len(distances)) / 1000.0  # Convert mm to meters
     return None
 
+def get_distance_at_45():
+    """Returns the LiDAR distance at a 45-degree angle in meters."""
+    lidar = rplidar.RPLidar('/dev/ttyUSB0')  # Adjust based on setup
+    distances = []
+
+    for scan in lidar.iter_scans():
+        for (_, angle, distance) in scan:
+            if 35 <= angle <= 55:  # Right-facing readings at 45 degrees
+                distances.append(distance)
+            elif -55 <= angle <= -35:  # Left-facing readings at -45 degrees
+                distances.append(distance)
+        if distances:
+            lidar.stop()
+            lidar.disconnect()
+            return (sum(distances) / len(distances)) / 1000.0  # Convert mm to meters
+    return None
+
+
 # User-defined class to handle serial communication and movement logic
 class user_app_callback_class(app_callback_class):
     def __init__(self):
@@ -115,10 +133,25 @@ def app_callback(pad, info, user_data):
 
     # ---- Stage 2: Move Around Bucket ----
     elif user_data.stage == 2:
-        user_data.send_command("RIGHT")
-        user_data.send_command("FORWARD")
-        user_data.set_stage(3)  # Move to Stage 3
+        if distance is not None and 0.4 <= distance <= 0.6:
+            if user_data.start_time is None:
+                user_data.start_wall_following()
 
+            if user_data.is_wall_following_complete():
+                user_data.set_stage(3)  # Move to Stage 3
+            else:
+                # Keep the robot at the correct distance and move
+                move_forward()
+                user_data.send_command("FORWARD")
+
+        else:
+            if distance < 0.4:
+                turn_left()  # Adjust movement if too close to bucket
+                user_data.send_command("LEFT")
+            elif distance > 0.6:
+                turn_right()  # Adjust movement if too far from bucket
+                user_data.send_command("RIGHT")
+                
     # ---- Stage 3: Align for Next Goal ----
     elif user_data.stage == 3:
         spin_45()  # Spin 45 degrees
