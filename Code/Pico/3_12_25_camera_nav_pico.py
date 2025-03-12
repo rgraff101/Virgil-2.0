@@ -48,21 +48,21 @@ poller.register(sys.stdin, select.POLLIN)
 def handle_command(command):
     print(f"Received command: {command}")
     
-    if command == "move_forward":
+    if command == "FORWARD":
         lm.reset_encoder()
         rm.reset_encoder()
         lm.forward(duty=0.6)
         rm.forward(duty=0.6)
         print("Moving forward...")
-    elif command == "stop":
+    elif command == "STOP":
         lm.stop()
         rm.stop()
         print("Stopping motors...")
-    elif command == "turn_left":
+    elif command == "LEFT":
         lm.forward(duty=0.1)  
         rm.forward(duty=0.3)  
         print("Turning left...")
-    elif command == "turn_right":
+    elif command == "RIGHT":
         lm.forward(duty=0.3) 
         rm.forward(duty=0.1)  
         print("Turning right...")
