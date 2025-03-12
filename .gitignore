@@ -177,3 +177,7 @@ cython_debug/
 # Log files
 *.log
 log/
+
+# Micro-Pico
+.micropico
+*.json
