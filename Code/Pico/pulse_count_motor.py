@@ -16,11 +16,6 @@ class PulseCountMotor:
         
         # Variables
         self.pulse_count = 0
-        
-        # Constants
-        self.WHEEL_RADIUS = 0.055  # m
-        self.GEAR_RATIO = 50
-        self.PPR = 11
 
     def inc_pulse_count(self, pin):
         self.pulse_count += 1
