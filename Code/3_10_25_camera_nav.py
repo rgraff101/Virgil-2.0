@@ -118,7 +118,7 @@ def app_callback(pad, info, user_data):
     user_data.update_lidar(distance)
     string_to_print += f"LiDAR Distance: {distance}m\n"
 
-    # ---- Stage 1: Approach Bucket ----
+    # ---- Stage 1: Approach Bucket 1 ----
     if user_data.stage == 1:
         if distance is not None and distance <= 1.0:
             stop()  # Stop when 1 meter away
@@ -131,7 +131,7 @@ def app_callback(pad, info, user_data):
             elif move_command == "forward":
                 user_data.send_command("FORWARD")
 
-    # ---- Stage 2: Move Around Bucket ----
+    # ---- Stage 2: Move Around Bucket 1 ----
     elif user_data.stage == 2:
         if distance is not None and 0.4 <= distance <= 0.6:
             if user_data.start_time is None:
@@ -141,25 +141,18 @@ def app_callback(pad, info, user_data):
                 user_data.set_stage(3)  # Move to Stage 3
             else:
                 # Keep the robot at the correct distance and move
-                move_forward()
                 user_data.send_command("FORWARD")
 
         else:
             if distance < 0.4:
-                turn_left()  # Adjust movement if too close to bucket
                 user_data.send_command("LEFT")
             elif distance > 0.6:
-                turn_right()  # Adjust movement if too far from bucket
                 user_data.send_command("RIGHT")
                 
     # ---- Stage 3: Align for Next Goal ----
     elif user_data.stage == 3:
-        spin_45()  # Spin 45 degrees
+        user_data.send_command("ADJUST")
         user_data.set_stage(4)  # Move to Stage 4
-
-    # ---- Stage 4: Continue Navigation ----
-    elif user_data.stage == 4:
-        move_forward()  # Continue navigating
 
     print(string_to_print)
     return Gst.PadProbeReturn.OK
