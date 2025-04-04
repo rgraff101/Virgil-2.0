@@ -19,7 +19,7 @@ cd /local/workspace/hailo_model_zoo/training/yolov8
 yolo detect train data=/local/workspace/datasets/buckets_dataset/data.yaml model=yolov8s.pt name=bucket_yolov8s epochs=50 batch=16
 ```
 
-## Validate the new checkpoint 
+### Validate the new checkpoint 
 
 ```bash
 yolo predict task=detect source=/local/workspace/datasets/buckets_dataset/valid/images/IMG_4511_jpg.rf.a1ce9a90595b28c828cbe7cd098bca9d.jpg model=./runs/detect/bucket_yolov8s/weights/best.pt
