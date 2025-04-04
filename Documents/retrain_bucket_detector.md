@@ -1,4 +1,5 @@
 # Using YOLOv8 Retraining Docker 
+Do following on the desktop in LSCA 105.
 
 ## Copy Dataset to Docker
 ```bash
