@@ -31,7 +31,7 @@ yolo predict task=detect source=/local/workspace/datasets/buckets_dataset/valid/
 yolo export model=./runs/detect/bucket_yolov8s/weights/best.pt imgsz=640 format=onnx opset=11
 ```
 
-## Copy the ONNX to a directory mapped outside the Docker container
+## Copy the ONNX to a dedicated directory
 
 ```bash
 cd /local/workspace/hailo_model_zoo/training/yolov8/bucket_models
